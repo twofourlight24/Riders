@@ -4,59 +4,114 @@ public class CarController : MonoBehaviour
 {
     private SurfaceEffector2D surfaceEffector2D;
     private Rigidbody2D rb;
-    public float jumpForce = 7f; // ¡°«¡ »˚ ¡∂¿˝øÎ
-
+    public float jumpForce = 7f;
     private bool isGrounded = false;
+    public float torqueAmount = 2f; // ÌöåÏ†Ñ Í≥ÑÏàò ÎÇÆÏ∂§
+    public float maxAngularVelocity = 100f; // ÏµúÍ≥† ÌöåÏ†Ñ Í∞ÄÏÜçÎèÑ Ï†úÌïú
+    public float baseSpeed = 5f;
+    public float boostSpeed = 10f;
+    private bool isBoosting = false;
+    private EdgeCollider2D deathEdge; // ÏÇ¨Îßù ÌåêÏ†ïÏö© ÏóêÏßÄ ÏΩúÎùºÏù¥Îçî
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        deathEdge = GetComponent<EdgeCollider2D>();
     }
 
-    // Update is called once per frame
     void Update()
+    {
+        HandleJumpInput();
+        UpdateUISpeedTexts();
+        HandleRotationInput();
+    }
+
+    private void FixedUpdate()
     {
         if (surfaceEffector2D != null)
         {
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                surfaceEffector2D.speed = 10f;
-            }
-            else if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                surfaceEffector2D.speed = 5f;
-            }
-            UIMgr.Instance.UpdateSurfaceSpeedText($"Surface Speed: {surfaceEffector2D.speed:F1}");
+            surfaceEffector2D.speed = isBoosting ? boostSpeed : baseSpeed;
         }
+        LimitAngularVelocity();
+    }
 
-        // Ω∫∆‰¿ÃΩ∫πŸ∑Œ ¡°«¡
+    private void HandleJumpInput()
+    {
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded && rb != null)
         {
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             isGrounded = false;
         }
-        UIMgr.Instance.UpdateCarSpeedText($"Car Speed: {rb.linearVelocity.magnitude:F1}");
+    }
+
+    private void HandleRotationInput()
+    {
+        if (rb == null) return;
+
+        float torque = 0f;
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+            torque = torqueAmount;
+        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+            torque = -torqueAmount;
+
+        if (torque != 0f)
+            rb.AddTorque(torque, ForceMode2D.Force);
+    }
+
+    private void LimitAngularVelocity()
+    {
+        if (rb == null) return;
+        rb.angularVelocity = Mathf.Clamp(rb.angularVelocity, -maxAngularVelocity, maxAngularVelocity);
+    }
+
+    private void UpdateUISpeedTexts()
+    {
+        if (rb != null)
+        {
+            UIMgr.Instance.UpdateCarSpeedText($"Car Speed: {rb.linearVelocity.magnitude:F1}");
+            if (surfaceEffector2D != null)
+                UIMgr.Instance.UpdateSurfaceSpeedText($"Surface Speed: {surfaceEffector2D.speed:F1}");
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.TryGetComponent<SurfaceEffector2D>(out var effecet))
+        // ÎÇ¥ EdgeCollider2DÍ∞Ä Ï∂©ÎèåÏóê Í¥ÄÏó¨ÌñàÎäîÏßÄ ÌôïÏù∏
+        // OnCollisionEnter2D ÎÇ¥Î∂ÄÏóêÏÑú
+        foreach (var contact in collision.contacts)
         {
-            surfaceEffector2D = effecet;
-            Debug.Log($"Collision with {collision.gameObject.name} detected. SurfaceEffector2D: {surfaceEffector2D.speed}");    
+            if (contact.collider == deathEdge)
+            {
+                GameMgr.Instance.GameStop();
+                return;
+            }
         }
 
-        // πŸ¥⁄ø° ¥Íæ“¿ª ∂ß ¡°«¡ ∞°¥…
-        if (collision.contacts.Length > 0 && collision.contacts[0].normal.y > 0.5f)
+        if (collision.gameObject.TryGetComponent<SurfaceEffector2D>(out var effector))
+        {
+            surfaceEffector2D = effector;
+        }
+           
+        // Ground ÌÉúÍ∑∏ Í∞êÏßÄÎ°ú Ï†êÌîÑ Í∞ÄÎä•
+        if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
-        }
+        }  
     }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        // πŸ¥⁄ø°º≠ ∂≥æÓ¡ˆ∏È ¡°«¡ ∫“∞°
-        isGrounded = false;
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            GameMgr.Instance.GameStop();
+        }
     }
 }

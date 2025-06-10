@@ -30,5 +30,14 @@ public class Coin : MonoBehaviour
         {
             audioSource.Play();
         }
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            Color color = spriteRenderer.color;
+            color.a = 0f; // 알파값을 0으로 설정하여 투명하게 만듦
+            spriteRenderer.color = color;
+        }
+        Destroy(gameObject, 1f);
     }
 }
+
