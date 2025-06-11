@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Square_Mat
+  m_Name: Square_Pur
   m_Shader: {fileID: -6465566751694194690, guid: a3d38b0d7dc7f234ca32b8db6d163ac0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -74,7 +74,7 @@ Material:
     - _GlowAmount: 1
     - _ZWrite: 0
     m_Colors:
-    - _Color: {r: 0, g: 0.48162842, b: 8, a: 1}
+    - _Color: {r: 1.3821988, g: 0.29319367, b: 10.680627, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
