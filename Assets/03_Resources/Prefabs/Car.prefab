@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6958350723623579976}
   - component: {fileID: 430544242183752088}
-  - component: {fileID: 8048653285399270155}
   - component: {fileID: 3853965412770920737}
   - component: {fileID: 6336368488633996588}
   - component: {fileID: 8566907116446410862}
+  - component: {fileID: 8760530665406032135}
   m_Layer: 0
   m_Name: Car
   m_TagString: Untagged
@@ -91,52 +91,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!61 &8048653285399270155
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8477487668132481098}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: -1.0322156, y: 1.2524157}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 7.69, y: 3.01}
-    newSize: {x: 7.69, y: 3.01}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 4.280308, y: 0.50516886}
-  m_EdgeRadius: 0
 --- !u!70 &3853965412770920737
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -186,7 +140,7 @@ Rigidbody2D:
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 1
+  m_Mass: 10
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 1
@@ -215,9 +169,49 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jumpForce: 7
   isGrounded: 0
-  torqueAmount: 100
+  torqueAmount: 30
   torqueIncreaseSpeed: 5
-  maxAngularVelocity: 360
+  maxAngularVelocity: 200
   baseSpeed: 0
   boostSpeed: 15
   speedIncreaseRate: 20
+  boostSpeedValue: 30
+  boostRateValue: 40
+  boostDuration: 2
+--- !u!70 &8760530665406032135
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8477487668132481098}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.93515253, y: 0.5441883}
+  m_Size: {x: 4.439432, y: 1.7710356}
+  m_Direction: 1

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Cinemachine; // 네임스페이스 
 
 public class CarController : MonoBehaviour
 {
@@ -7,38 +8,64 @@ public class CarController : MonoBehaviour
     public float jumpForce = 7f;
     public bool isGrounded = false;
     public float torqueAmount = 2f; // 회전 계수(최대값)
-    public float torqueIncreaseSpeed = 5f; // 토크 증가 속도
     public float maxAngularVelocity = 100f; // 최고 회전 가속도 제한
     public float baseSpeed = 0f;
     public float boostSpeed = 10f;
     public float speedIncreaseRate = 20f; // 속도 증가 속도
 
-    private float currentTorque = 0f;
-    private int torqueDirection = 0; // -1: 우회전, 1: 좌회전, 0: 없음
+    private float originalBoostSpeed;
+    private float originalSpeedIncreaseRate;
+    private float boostTimer = 0f;
+    private bool isBoosting = false;
+    public BoostController currentBoostController = null;
+
     private float currentSurfaceSpeed = 0f;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        // deathEdge는 인스펙터에서 할당
+        originalBoostSpeed = boostSpeed;
+        originalSpeedIncreaseRate = speedIncreaseRate;
     }
 
     void Update()
     {
         HandleJumpInput();
         UpdateUISpeedTexts();
+
+        // 부스트 타이머 관리
+        if (isBoosting)
+        {
+            boostTimer -= Time.deltaTime;
+            if (boostTimer <= 0f)
+            {
+                boostSpeed = originalBoostSpeed;
+                speedIncreaseRate = originalSpeedIncreaseRate;
+                isBoosting = false;
+                if (currentBoostController != null)
+                    currentBoostController.SetCameraSize(false);
+                currentBoostController = null;
+            }
+        }
     }
 
     private void FixedUpdate()
     {
         if (surfaceEffector2D != null)
         {
-            // 땅에 있을 때만 오른쪽키로 가속 (서서히 증가/감소)
             float targetSpeed = 0f;
-            if (isGrounded && Input.GetKey(KeyCode.RightArrow))
+
+            // 부스트 중이면 무조건 boostSpeed로 즉시 가속
+            if (isBoosting)
             {
                 targetSpeed = boostSpeed;
             }
+            // 아니면 평소처럼 오른쪽키+땅에서만 가속
+            else if (isGrounded && Input.GetKey(KeyCode.RightArrow))
+            {
+                targetSpeed = boostSpeed;
+            }
+
             // Lerp로 서서히 변화
             currentSurfaceSpeed = Mathf.MoveTowards(currentSurfaceSpeed, targetSpeed, speedIncreaseRate * Time.fixedDeltaTime);
             surfaceEffector2D.speed = currentSurfaceSpeed;
@@ -46,6 +73,17 @@ public class CarController : MonoBehaviour
 
         HandleRotationInput();
         LimitAngularVelocity();
+    }
+
+    public void ApplyBoost(float newBoostSpeed, float newRate, float duration, BoostController boostController)
+    {
+        boostSpeed = newBoostSpeed;
+        speedIncreaseRate = newRate;
+        boostTimer = duration;
+        isBoosting = true;
+        currentBoostController = boostController;
+        if (currentBoostController != null)
+            currentBoostController.SetCameraSize(true);
     }
 
     private void HandleJumpInput()
@@ -72,25 +110,15 @@ public class CarController : MonoBehaviour
 
             if (inputDir != 0)
             {
-                if (torqueDirection != inputDir)
-                {
-                    currentTorque = 0f;
-                    torqueDirection = inputDir;
-                }
-                currentTorque += torqueIncreaseSpeed * Time.fixedDeltaTime;
-                currentTorque = Mathf.Clamp(currentTorque, 0f, torqueAmount);
-                rb.AddTorque(currentTorque * inputDir, ForceMode2D.Force);
+                rb.AddTorque(torqueAmount * inputDir, ForceMode2D.Force);
             }
             else
             {
-                currentTorque = 0f;
-                torqueDirection = 0;
+                // 감쇠 적용: 회전 속도를 점점 줄임
+                rb.angularVelocity *= 0.9f; // 0.9~0.95 정도가 자연스러움, 값은 취향에 따라 조절
+                if (Mathf.Abs(rb.angularVelocity) < 0.1f)
+                    rb.angularVelocity = 0f; // 완전히 멈추면 0으로
             }
-        }
-        else
-        {
-            currentTorque = 0f;
-            torqueDirection = 0;
         }
     }
 
@@ -133,6 +161,15 @@ public class CarController : MonoBehaviour
         }
     }
 
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+             isGrounded = true;
+            
+        }
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -145,5 +182,6 @@ public class CarController : MonoBehaviour
         {
             GameMgr.Instance.GameStop();
         }
+        // Boost 관련 코드는 BoostController에서 처리
     }
 }
