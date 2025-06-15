@@ -9,6 +9,11 @@ public class UIMgr : MonoBehaviour
     public Text CarSpeedText;
     public Text CurrentTimeText;
     public Text FastestTimeText;
+    public Text ScoreText;
+    public Text CoinText; // 코인 텍스트
+    public Text PanelScoreText;
+    public Text PanelCoinText; // 패널 코인 텍스트
+    public Text PanelTitleText;
     public GameObject Panel;
 
     private void Awake()
@@ -35,7 +40,6 @@ public class UIMgr : MonoBehaviour
     {
         SurfaceSpeedText.text = speed;
     }
-
     public void UpdateCarSpeedText(string speed)
     {
         CarSpeedText.text = speed;
@@ -62,6 +66,27 @@ public class UIMgr : MonoBehaviour
             Panel.SetActive(false);
         }
     }
+    public void UpdateScore(string score)
+    {
+        ScoreText.text = score;
+    }
+    public void UpdateCoin(string coin)
+    {
+        CoinText.text = coin;
+    }
+    public void UpdatePanelScore(string score)
+    {
+        PanelScoreText.text = score;
+    }
+    public void UpdatePanelCoin(string coin)
+    {
+        PanelCoinText.text = coin;
+    }
+    public void UpdatePanelTitle(string title)
+    {
+        PanelTitleText.text = title;
+    }   
+
     public void GameRestart()
     {
         GameMgr.Instance.GameStart(); // 게임 시작

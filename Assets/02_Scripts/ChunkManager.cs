@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Unity.Cinemachine; // Cinemachine을 사용하기 위해 추가
 
 public class ChunkManager : MonoBehaviour
 {
@@ -10,12 +9,19 @@ public class ChunkManager : MonoBehaviour
     public GameObject baseChunk; // 하이어라키에 배치된 기본 청크(첫 청크)
     public float spawnDistance = 30f; // 플레이어 앞 몇 미터까지 청크를 미리 생성할지
 
-    // 추가: Cinemachine Virtual Camera 레퍼런스
-    public CinemachineCamera virtualCamera; // 인스펙터에서 할당할 가상 카메라
+    public CameraController cameraController; // 인스펙터에서 할당
+
+    public GameObject finishChunkPrefab; // FinishChunk 프리팹을 인스펙터에서 할당
 
     private Vector3 nextSpawnPosition;
     private List<GameObject> activeChunks = new List<GameObject>();
     private bool playerSpawned = false; // 플레이어가 생성되었는지 확인하는 플래그
+
+    // 추가: 마지막으로 점수를 준 청크 인덱스
+    private int lastScoredChunkIndex = -1;
+
+    private int chunkCount = 0; // 생성된 청크 개수
+    private bool finishChunkSpawned = false; // FinishChunk가 생성되었는지 여부
 
     void Start()
     {
@@ -30,16 +36,6 @@ public class ChunkManager : MonoBehaviour
             {
                 nextSpawnPosition = exitPoint.position;
             }
-            else
-            {
-                Debug.LogError("Base chunk에 ExitPoint가 없습니다!");
-                nextSpawnPosition = baseChunk.transform.position;
-            }
-        }
-        else
-        {
-            Debug.LogError("Base chunk가 할당되지 않았습니다!");
-            nextSpawnPosition = Vector3.zero;
         }
 
         // 추가 청크 미리 생성
@@ -74,30 +70,88 @@ public class ChunkManager : MonoBehaviour
                 activeChunks.RemoveAt(0);
             }
         }
+
+        // === 청크 통과 시 점수 부여 ===
+        for (int i = lastScoredChunkIndex + 1; i < activeChunks.Count; i++)
+        {
+            GameObject chunk = activeChunks[i];
+            Transform exitPoint = chunk.transform.Find("ExitPoint");
+            if (exitPoint != null)
+            {
+                // 플레이어가 ExitPoint를 지났는지 확인 (x축 기준)
+                if (player.position.x > exitPoint.position.x)   
+                {
+                    GameMgr.Instance.Score(); // 점수 1점 추가
+                    lastScoredChunkIndex = i;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
     }
 
     void SpawnNextChunk()
     {
-        GameObject prefab = chunkPrefabs[Random.Range(0, chunkPrefabs.Count)];
-        GameObject chunk = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-
-        Transform startPoint = chunk.transform.Find("StartPoint");
-        Transform exitPoint = chunk.transform.Find("ExitPoint");
-
-        if (startPoint != null && exitPoint != null)
+        // 100개가 생성되면 FinishChunk만 생성하고, 그 이후로는 아무것도 생성하지 않음
+        if (chunkCount >= 100 && !finishChunkSpawned)
         {
-            Vector3 offset = nextSpawnPosition - startPoint.position;
-            chunk.transform.position += offset;
-            nextSpawnPosition = exitPoint.position; 
+            GameObject chunk = Instantiate(finishChunkPrefab, Vector3.zero, Quaternion.identity);
+
+            Transform startPoint = chunk.transform.Find("StartPoint");
+            Transform exitPoint = chunk.transform.Find("ExitPoint");
+
+            if (startPoint != null && exitPoint != null)
+            {
+                Vector3 offset = nextSpawnPosition - startPoint.position;
+                chunk.transform.position += offset;
+                nextSpawnPosition = exitPoint.position;
+            }
+            else
+            {
+                chunk.transform.position = nextSpawnPosition;
+                nextSpawnPosition = chunk.transform.position;
+            }
+
+            activeChunks.Add(chunk);
+            finishChunkSpawned = true;
+            return;
+        }
+        else if (chunkCount >= 100)
+        {
+            return;
+        }
+
+        // === 청크가 5개 이상이면 맨 앞 청크 삭제 ===
+        if (activeChunks.Count >= 5)
+        {
+            Destroy(activeChunks[0]);
+            activeChunks.RemoveAt(0);
+            lastScoredChunkIndex = Mathf.Max(-1, lastScoredChunkIndex - 1); // 점수 인덱스 보정
+        }
+
+        // 일반 청크 생성
+        GameObject prefab = chunkPrefabs[Random.Range(0, chunkPrefabs.Count)];
+        GameObject normalChunk = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+
+        Transform normalStartPoint = normalChunk.transform.Find("StartPoint");
+        Transform normalExitPoint = normalChunk.transform.Find("ExitPoint");
+
+        if (normalStartPoint != null && normalExitPoint != null)
+        {
+            Vector3 offset = nextSpawnPosition - normalStartPoint.position;
+            normalChunk.transform.position += offset;
+            nextSpawnPosition = normalExitPoint.position;
         }
         else
         {
-            Debug.LogWarning("Chunk prefab " + prefab.name + " is missing StartPoint or ExitPoint! Chunk will not be placed correctly.");
-            chunk.transform.position = nextSpawnPosition;
-            nextSpawnPosition = chunk.transform.position;
+            normalChunk.transform.position = nextSpawnPosition;
+            nextSpawnPosition = normalChunk.transform.position;
         }
 
-        activeChunks.Add(chunk);
+        activeChunks.Add(normalChunk);
+        chunkCount++;
     }
 
     void SpawnPlayerInFirstChunk()
@@ -114,21 +168,10 @@ public class ChunkManager : MonoBehaviour
                 playerSpawned = true; 
                 Debug.Log("Player spawned at: " + spawnPoint.position);
 
-                // ⭐ 중요: Cinemachine Virtual Camera의 Target을 새로 생성된 플레이어로 설정 ⭐
-                if (virtualCamera != null)
+                if (cameraController != null)
                 {
-                    virtualCamera.Follow = player;
-                    virtualCamera.LookAt = player;
-                    Debug.Log("Cinemachine Virtual Camera's Follow and LookAt targets set to Player.");
+                    cameraController.SetTarget(player);
                 }
-                else
-                {
-                    Debug.LogError("Cinemachine Virtual Camera is not assigned! Please assign it in the Inspector.");
-                }
-            }
-            else
-            {
-                Debug.LogError("First chunk (" + firstChunk.name + ") is missing a 'SpawnPoint' child. Player cannot be spawned.");
             }
         }
     }

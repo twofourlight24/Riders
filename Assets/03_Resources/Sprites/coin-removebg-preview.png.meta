@@ -124,6 +124,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -272,7 +285,13 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      coin-removebg-preview_0: 1409828130122727214
+      coin-removebg-preview_1: -3216960854675131754
+      coin-removebg-preview_2: -5467321113753431421
+      coin-removebg-preview_3: 7251567993626171688
+      coin-removebg-preview_4: 8678057684512226328
+      coin-removebg-preview_5: -5177082105898131368
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

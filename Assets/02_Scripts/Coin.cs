@@ -4,6 +4,7 @@ public class Coin : MonoBehaviour
 {
     private ParticleSystem particleSystem;
     private AudioSource audioSource;
+    public bool isCollected = false; // 코인이 수집되었는지 여부를 나타내는 변수
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -22,6 +23,8 @@ public class Coin : MonoBehaviour
     // 트리거에 닿았을 때 호출됨
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (!isCollected) isCollected = true; // 코인이 수집되었음을 표시
+        else return; // 이미 수집된 코인은 무시
         if (particleSystem != null)
         {
             particleSystem.Play();
@@ -30,6 +33,7 @@ public class Coin : MonoBehaviour
         {
             audioSource.Play();
         }
+        GameMgr.Instance.Coin();
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {

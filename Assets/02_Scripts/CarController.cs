@@ -1,5 +1,6 @@
-using UnityEngine;
 using Unity.Cinemachine; // 네임스페이스 
+using UnityEngine;
+using UnityEngine.UI; // 추가된 네임스페이스
 
 public class CarController : MonoBehaviour
 {
@@ -9,22 +10,40 @@ public class CarController : MonoBehaviour
     public bool isGrounded = false;
     public float torqueAmount = 2f; // 회전 계수(최대값)
     public float maxAngularVelocity = 100f; // 최고 회전 가속도 제한
-    public float baseSpeed = 0f;
-    public float boostSpeed = 10f;
-    public float speedIncreaseRate = 20f; // 속도 증가 속도
-
-    private float originalBoostSpeed;
-    private float originalSpeedIncreaseRate;
+    public float baseSpeed = 15f; // 기본 속도(원하는 값으로 초기화)
+    private float currentBoostSpeed = 0f; // 부스트 시 속도, 0이면 부스트 아님
     private float boostTimer = 0f;
-    private bool isBoosting = false;
-    public BoostController currentBoostController = null;
-
     private float currentSurfaceSpeed = 0f;
+
+    private float lastAirborneAngle = 0f;
+    private float airborneRotation = 0f;
+    private bool wasAirborne = false;
+    private int pendingScore = 0;
+
+    private Text airScoreText; // UI 텍스트 컴포넌트
+    public float reloadDelay = 2f; // 재시작 지연 시간
+    private AudioSource audioSource;
+    public AudioClip crashSound; // 충돌 사운드
+    public AudioClip roadSound;
+    public float maxRoadSoundVolume = 1f;
+    public ParticleSystem CrashEffect;
+
+    private float roadSoundFadeTime = 1.5f; // 볼륨이 커지는 시간(초)
+    private float roadSoundFadeTimer = 0f;
+    private bool isRoadSoundFadingIn = false;
+    private bool isRoadSoundPlaying = false; // 멤버 변수 추가
+
+    public float boostSpeed = 20f;
+    public float speedIncreaseRate = 20f;
+    private float originalSpeedIncreaseRate;
+    private bool isBoosting = false;
+    private BoostController currentBoostController = null;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        originalBoostSpeed = boostSpeed;
+        airScoreText = GameObject.Find("AirScoreText").GetComponent<Text>();
+        audioSource = GetComponent<AudioSource>();
         originalSpeedIncreaseRate = speedIncreaseRate;
     }
 
@@ -33,18 +52,109 @@ public class CarController : MonoBehaviour
         HandleJumpInput();
         UpdateUISpeedTexts();
 
-        // 부스트 타이머 관리
         if (isBoosting)
         {
             boostTimer -= Time.deltaTime;
             if (boostTimer <= 0f)
             {
-                boostSpeed = originalBoostSpeed;
+                boostSpeed = baseSpeed;
                 speedIncreaseRate = originalSpeedIncreaseRate;
                 isBoosting = false;
                 if (currentBoostController != null)
                     currentBoostController.SetCameraSize(false);
                 currentBoostController = null;
+            }
+        }
+
+        // 부스트 타이머 관리
+        if (boostTimer > 0f)
+        {
+            boostTimer -= Time.deltaTime;
+            if (boostTimer <= 0f)
+            {
+                currentBoostSpeed = 0f; // 부스트 종료
+            }
+        }
+
+        // --- 도로 사운드: 땅에 있고, 속도가 0.1 이상일 때만 점진적으로 커지며 재생 ---
+        if (isGrounded && rb != null && rb.linearVelocity.magnitude > 0.1f)
+        {
+            if (!isRoadSoundPlaying)
+            {
+                audioSource.clip = roadSound;
+                audioSource.volume = 0f;
+                audioSource.loop = true;
+                audioSource.Play();
+                isRoadSoundFadingIn = true;
+                roadSoundFadeTimer = 0f;
+                isRoadSoundPlaying = true;
+            }
+            // 볼륨 점진적 증가
+            if (isRoadSoundFadingIn)
+            {
+                roadSoundFadeTimer += Time.deltaTime;
+                float t = Mathf.Clamp01(roadSoundFadeTimer / roadSoundFadeTime);
+                audioSource.volume = Mathf.Lerp(0f, maxRoadSoundVolume, t);
+                if (t >= 1f)
+                {
+                    isRoadSoundFadingIn = false;
+                }
+            }
+        }
+        else
+        {
+            if (isRoadSoundPlaying)
+            {
+                audioSource.Stop();
+                isRoadSoundPlaying = false;
+                isRoadSoundFadingIn = false;
+                roadSoundFadeTimer = 0f;
+            }
+        }
+
+        // --- 360도 회전 체크 및 임시 점수 UI 할당 ---
+        if (!isGrounded)
+        {
+            if (!wasAirborne)
+            {
+                lastAirborneAngle = rb.rotation;
+                airborneRotation = 0f;
+                pendingScore = 0;
+                UpdateAirScoreText(""); // 시작 시 초기화
+                wasAirborne = true;
+            }
+            else
+            {
+                float currentAngle = rb.rotation;
+                float deltaAngle = Mathf.DeltaAngle(lastAirborneAngle, currentAngle);
+                airborneRotation += deltaAngle;
+                lastAirborneAngle = currentAngle;
+
+                int beforeScore = pendingScore;
+                while (Mathf.Abs(airborneRotation) >= 360f)
+                {
+                    pendingScore += 1;
+                    airborneRotation -= 360f * Mathf.Sign(airborneRotation);
+                }
+                if (pendingScore != beforeScore)
+                {
+                    UpdateAirScoreText($"+{pendingScore}");
+                }
+            }
+            UpdateAirScoreTextPosition();
+        }
+        else
+        {
+            if (wasAirborne)
+            {
+                for (int i = 0; i < pendingScore; i++)
+                {
+                    GameMgr.Instance.Score();
+                }
+                UpdateAirScoreText(""); // 텍스트 숨김
+                pendingScore = 0;
+                airborneRotation = 0f;
+                wasAirborne = false;
             }
         }
     }
@@ -55,18 +165,19 @@ public class CarController : MonoBehaviour
         {
             float targetSpeed = 0f;
 
-            // 부스트 중이면 무조건 boostSpeed로 즉시 가속
             if (isBoosting)
             {
                 targetSpeed = boostSpeed;
             }
-            // 아니면 평소처럼 오른쪽키+땅에서만 가속
             else if (isGrounded && Input.GetKey(KeyCode.RightArrow))
             {
-                targetSpeed = boostSpeed;
+                targetSpeed = baseSpeed;
+            }
+            else
+            {
+                targetSpeed = 0f; // 가속키를 안누르면 멈춤
             }
 
-            // Lerp로 서서히 변화
             currentSurfaceSpeed = Mathf.MoveTowards(currentSurfaceSpeed, targetSpeed, speedIncreaseRate * Time.fixedDeltaTime);
             surfaceEffector2D.speed = currentSurfaceSpeed;
         }
@@ -138,6 +249,26 @@ public class CarController : MonoBehaviour
         }
     }
 
+    private void UpdateAirScoreTextPosition()
+    {
+        if (airScoreText != null)
+        {
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                // 자동차의 오른쪽(월드 기준)으로 1.5만큼 이동
+                Vector3 worldPos = transform.position + Vector3.right * 3f + Vector3.up*1f;
+                Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
+                airScoreText.transform.position = screenPos;
+            }
+        }
+    }
+
+    public void UpdateAirScoreText(string text) // 추가된 메서드
+    {
+        airScoreText.text = text;
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         // deathEdge가 충돌에 관여했는지 확인
@@ -150,6 +281,12 @@ public class CarController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+            audioSource.clip = roadSound;
+            audioSource.volume = 0f;
+            audioSource.loop = false;
+            audioSource.Play();
+            isRoadSoundFadingIn = true;
+            roadSoundFadeTimer = 0f;
         }
     }
 
@@ -158,6 +295,9 @@ public class CarController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = false;
+            audioSource.Stop();
+            isRoadSoundFadingIn = false;
+            roadSoundFadeTimer = 0f;
         }
     }
 
@@ -174,14 +314,23 @@ public class CarController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            GameMgr.Instance.GameStop();
+            CrashEffect.Play();
+            audioSource.PlayOneShot(crashSound); // 충돌 사운드 재생
+            Invoke(nameof(StopGame), reloadDelay); // 지연 후 재시작
             return;
         }
 
         if (collision.gameObject.CompareTag("Obstacle"))
         {
-            GameMgr.Instance.GameStop();
+            CrashEffect.Play();
+            audioSource.PlayOneShot(crashSound); // 충돌 사운드 재생
+            Invoke(nameof(StopGame), reloadDelay); // 지연 후 재시작
+            return;
         }
-        // Boost 관련 코드는 BoostController에서 처리
+    }
+
+    private void StopGame()
+    {
+        GameMgr.Instance.GameStop(false);
     }
 }
