@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class UIMgr : MonoBehaviour
 {
@@ -90,5 +91,13 @@ public class UIMgr : MonoBehaviour
     public void GameRestart()
     {
         GameMgr.Instance.GameStart(); // 게임 시작
+    }
+    public void GameQuit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }

@@ -1,3 +1,4 @@
+using System.Numerics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -8,7 +9,7 @@ public class GameMgr : MonoBehaviour
     public static GameMgr Instance { get; private set; }
 
     public float elapsedTime = 0f; // 경과 시간 
-    public static float fasetTime = 0f; // 최대 시간
+    public static float fasetTime = float.MaxValue; // 최대 시간
     public int g_Score = 0; // 현재 점수
     public static int MaxScore = 0; // 최고 점수
     int g_Coin = 0;
@@ -64,7 +65,7 @@ public class GameMgr : MonoBehaviour
         Time.timeScale = 0f;
 
         // currrent,fasetTime 저장 및 비교
-        if (elapsedTime < fasetTime)
+        if (isClear == true &&elapsedTime < fasetTime)
         {
             fasetTime = elapsedTime; // 새로운 최고 기록 갱신
         }
@@ -73,7 +74,10 @@ public class GameMgr : MonoBehaviour
             MaxScore = g_Score; // 새로운 최고 점수 갱신
         }
         UIMgr.Instance.UpdateCurrentTimeText("Current Time : " + FormatTime(elapsedTime)); // 현재 시간 UI 업데이트
-        UIMgr.Instance.UpdateFastestTimeText("Fastest Time : " + FormatTime(fasetTime)); // 최고 기록 UI 업데이트
+        if(fasetTime == float.MaxValue)
+            UIMgr.Instance.UpdateFastestTimeText("Fastest Time : --:--:---"); // 최고 기록이 없을 때
+        else
+            UIMgr.Instance.UpdateFastestTimeText("Fastest Time : " + FormatTime(fasetTime)); // 최고 기록 UI 업데이트
         UIMgr.Instance.UpdatePanelScore("Score : " + g_Score + "  BestScore : " + MaxScore); // 패널 점수 업데이트
         UIMgr.Instance.UpdatePanelCoin("Coin : 100/ " + g_Coin); // 패널 코인 업데이트
 
@@ -84,6 +88,7 @@ public class GameMgr : MonoBehaviour
             UIMgr.Instance.UpdatePanelTitle("Game Over");
 
         elapsedTime = 0f; // 경과 시간 초기화
+        bgmSource.Stop(); // 배경음악 정지
 
         // 패널 활성화 
         UIMgr.Instance.ShowPanel();
@@ -97,6 +102,7 @@ public class GameMgr : MonoBehaviour
         elapsedTime = 0f; // 경과 시간 초기화
         g_Score = 0;
         g_Coin = 0; // 코인 초기화
+        bgmSource.Play(); // 배경음악 재생  
     }
 
     private string FormatTime(float time)
@@ -119,5 +125,4 @@ public class GameMgr : MonoBehaviour
         }
         UIMgr.Instance.UpdateCoin("100 / " + g_Coin); // UI 업데이트
     }
-
 }

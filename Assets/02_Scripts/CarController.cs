@@ -1,5 +1,6 @@
 using Unity.Cinemachine; // 네임스페이스 
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.UI; // 추가된 네임스페이스
 
 public class CarController : MonoBehaviour
@@ -39,6 +40,8 @@ public class CarController : MonoBehaviour
     private bool isBoosting = false;
     private BoostController currentBoostController = null;
 
+    private bool hasCrashed = false; 
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -77,7 +80,7 @@ public class CarController : MonoBehaviour
         }
 
         // --- 도로 사운드: 땅에 있고, 속도가 0.1 이상일 때만 점진적으로 커지며 재생 ---
-        if (isGrounded && rb != null && rb.linearVelocity.magnitude > 0.1f)
+        if (isGrounded && rb != null && rb.linearVelocity.magnitude > 0.1f && Time.timeScale ==1f)
         {
             if (!isRoadSoundPlaying)
             {
@@ -281,12 +284,12 @@ public class CarController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
-            audioSource.clip = roadSound;
-            audioSource.volume = 0f;
-            audioSource.loop = false;
-            audioSource.Play();
-            isRoadSoundFadingIn = true;
-            roadSoundFadeTimer = 0f;
+            PlayRoadSound();
+        }
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            HandleCrash();
+            return;
         }
     }
 
@@ -312,21 +315,30 @@ public class CarController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (collision.gameObject.CompareTag("Ground") || collision.gameObject.CompareTag("Obstacle"))
         {
-            CrashEffect.Play();
-            audioSource.PlayOneShot(crashSound); // 충돌 사운드 재생
-            Invoke(nameof(StopGame), reloadDelay); // 지연 후 재시작
+            HandleCrash();
             return;
         }
+    }
 
-        if (collision.gameObject.CompareTag("Obstacle"))
-        {
-            CrashEffect.Play();
-            audioSource.PlayOneShot(crashSound); // 충돌 사운드 재생
-            Invoke(nameof(StopGame), reloadDelay); // 지연 후 재시작
-            return;
-        }
+    private void PlayRoadSound()
+    {
+        audioSource.clip = roadSound;
+        audioSource.volume = 0f;
+        audioSource.loop = false;
+        audioSource.Play();
+        isRoadSoundFadingIn = true;
+        roadSoundFadeTimer = 0f;
+    }
+
+    private void HandleCrash()
+    {
+        if (hasCrashed) return;
+        hasCrashed = true;
+        CrashEffect.Play();
+        audioSource.PlayOneShot(crashSound); // 충돌 사운드 재생
+        Invoke(nameof(StopGame), reloadDelay); // 지연 후 재시작
     }
 
     private void StopGame()

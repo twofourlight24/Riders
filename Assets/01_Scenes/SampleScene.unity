@@ -1749,6 +1749,10 @@ MonoBehaviour:
   - {fileID: 4219131335484531548, guid: b50adcdef7e82844b9292f3632a66569, type: 3}
   - {fileID: 2089185078189243655, guid: 2244d4c82843b834883baf9c80ceedc4, type: 3}
   - {fileID: 4892280779284977021, guid: 0003effe30f07624c826dbeb1dd0a14b, type: 3}
+  - {fileID: 2733241827119821903, guid: 17f446b1c8446994c8c713a158bdbd6e, type: 3}
+  - {fileID: 4924590096346267662, guid: 6f08d272fa9814a4088239227a5139fc, type: 3}
+  - {fileID: 695525009538553884, guid: f60ab5581c420cf46b7ebbc4094fbb99, type: 3}
+  - {fileID: 4066187968496632792, guid: ef96d1dbcf9432b45b4468e65d73ccdb, type: 3}
   player: {fileID: 6958350723623579976, guid: 1c5b53cc7e15261448792a3e6e3c2fb4, type: 3}
   playerPrefab: {fileID: 8477487668132481098, guid: 1c5b53cc7e15261448792a3e6e3c2fb4, type: 3}
   baseChunk: {fileID: 1156556677}
@@ -1840,7 +1844,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1400860380876137893}
         m_TargetAssemblyTypeName: UIMgr, Assembly-CSharp
-        m_MethodName: GameRestart
+        m_MethodName: GameQuit
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
