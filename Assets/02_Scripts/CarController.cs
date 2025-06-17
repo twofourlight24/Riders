@@ -63,8 +63,6 @@ public class CarController : MonoBehaviour
                 boostSpeed = baseSpeed;
                 speedIncreaseRate = originalSpeedIncreaseRate;
                 isBoosting = false;
-                if (currentBoostController != null)
-                    currentBoostController.SetCameraSize(false);
                 currentBoostController = null;
             }
         }
@@ -196,8 +194,6 @@ public class CarController : MonoBehaviour
         boostTimer = duration;
         isBoosting = true;
         currentBoostController = boostController;
-        if (currentBoostController != null)
-            currentBoostController.SetCameraSize(true);
     }
 
     private void HandleJumpInput()
@@ -274,7 +270,6 @@ public class CarController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // deathEdge가 충돌에 관여했는지 확인
         if (collision.gameObject.TryGetComponent<SurfaceEffector2D>(out var effector))
         {
             surfaceEffector2D = effector;

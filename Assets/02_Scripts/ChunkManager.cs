@@ -41,8 +41,7 @@ public class ChunkManager : MonoBehaviour
         if (Vector3.Distance(player.position, nextSpawnPosition) < spawnDistance)
             SpawnNextChunk();
 
-        // 오래된 청크 삭제 (SpawnNextChunk에서 5개 이상이면 삭제하므로 중복 삭제 불필요)
-        // === 청크 통과 시 점수 부여 ===
+        // 오래된 청크 삭제 및 점수 체크
         for (int i = lastScoredChunkIndex + 1; i < activeChunks.Count; i++)
         {
             GameObject chunk = activeChunks[i];
