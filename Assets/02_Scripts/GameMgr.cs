@@ -13,6 +13,7 @@ public class GameMgr : MonoBehaviour
     public int g_Score = 0; // 현재 점수
     public static int MaxScore = 0; // 최고 점수
     int g_Coin = 0;
+    bool isAccumulate = true; // 코인 누적 여부
     public Text timerText; // UI 텍스트 컴포넌트
 
     // === 배경음악 추가 ===
@@ -54,9 +55,11 @@ public class GameMgr : MonoBehaviour
     {
         elapsedTime += Time.deltaTime; // 경과 시간 업데이트
         UIMgr.Instance.UpdateTime(FormatTime(elapsedTime)); // UI 업데이트
-        if (g_Coin >= 100) // 코인이 100 이상이면 게임 클리어
+        if (g_Coin >= 50 && isAccumulate) 
         {
-            g_Score += 100; // 점수 100점 추가
+            isAccumulate = false; // 코인 누적 상태 해제
+            g_Score += 99; // 점수 100점 추가
+            Score(); // 점수 UI 업데이트
         }
     }
     public void GameStop(bool isClear = false)
@@ -79,7 +82,7 @@ public class GameMgr : MonoBehaviour
         else
             UIMgr.Instance.UpdateFastestTimeText("Fastest Time : " + FormatTime(fasetTime)); // 최고 기록 UI 업데이트
         UIMgr.Instance.UpdatePanelScore("Score : " + g_Score + "  BestScore : " + MaxScore); // 패널 점수 업데이트
-        UIMgr.Instance.UpdatePanelCoin("Coin : 100/ " + g_Coin); // 패널 코인 업데이트
+        UIMgr.Instance.UpdatePanelCoin("Coin : "+ g_Coin+" / 50"); // 패널 코인 업데이트
 
         // 패널 타이틀 업데이트
         if (isClear)
@@ -123,6 +126,6 @@ public class GameMgr : MonoBehaviour
         {
             g_Coin += 1;
         }
-        UIMgr.Instance.UpdateCoin("100 / " + g_Coin); // UI 업데이트
+        UIMgr.Instance.UpdateCoin(g_Coin+" / 50"); // UI 업데이트
     }
 }

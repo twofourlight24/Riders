@@ -2121,7 +2121,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 134, y: 3}
+  m_AnchoredPosition: {x: 146.35, y: 3}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1491820416
@@ -2157,7 +2157,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 100 / 0
+  m_Text: 0 / 50
 --- !u!222 &1491820417
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2983,7 +2983,7 @@ MonoBehaviour:
   elapsedTime: 0
   g_Score: 0
   timerText: {fileID: 4481944474823744908}
-  bgmClip: {fileID: 0}
+  bgmClip: {fileID: 8300000, guid: d1b6d8bde29143645b5a785eca7a3dc7, type: 3}
 --- !u!114 &3964754092005729216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3160,8 +3160,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: d1b6d8bde29143645b5a785eca7a3dc7, type: 3}
-  m_Resource: {fileID: 8300000, guid: d1b6d8bde29143645b5a785eca7a3dc7, type: 3}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 0.175
   m_Pitch: 1
